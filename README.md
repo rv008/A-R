@@ -18,13 +18,28 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Deploying is a matter of serving the folder — GitHub Pages, Netlify, or any
-static host will do. Opening `index.html` straight from disk also works.
+Opening `index.html` straight from disk also works.
+
+## Deploying
+
+It is live at **<https://rv008.github.io/A-R/>**.
+
+`main` is the only branch kept; pushing to it deploys.
+`.github/workflows/deploy.yml` copies `index.html` and `assets/` into `_site`
+and hands that to GitHub Pages — there is nothing to compile, so there is no
+build step to go wrong. The README and the generators in `tools/` stay out of
+the published site.
+
+Every path in `index.html` is relative, so the invitation works unchanged at a
+subpath like `/A-R/` or at the root of a domain. The two exceptions are
+`og:url` and `og:image`, which have to be absolute for link previews to
+resolve; both need editing if the invitation ever moves.
 
 ## Layout
 
 ```
 index.html            the invitation
+.github/workflows/    the Pages deploy
 assets/css/style.css  the look
 assets/js/main.js     countdown, .ics, share, reveal-on-scroll
 assets/qr/*.svg       map QR codes (generated, see below)
