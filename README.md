@@ -1,62 +1,96 @@
 # Ronald & Amala
 
-A one-page wedding invitation for **Ronald Varghese** and **Amala Wilson** —
+A cinematic wedding invitation for **Ronald Varghese** and **Amala Wilson** —
 Monday, 14 September 2026, St. Casimir's Church, Kadavoor, Kollam.
 
-The page is meant to be watched rather than read. Scrolling is the timeline:
-the sky is graded continuously from night to full morning, and each scene
-dissolves in and out of the frame like a shot in a film.
+The invitation is meant to be watched rather than read. It opens on a sealed
+manuscript in the dark, and unfolds chapter by chapter as you scroll: the hosts'
+page, the couple joined by a growing vine, the day proclaimed on parchment under
+a wax seal, three celebrations each in a world of its own, and a night sky
+filling with lanterns.
 
 ## Running it
 
-It is a static site with no build step and no dependencies.
-
 ```sh
-python3 -m http.server 8000
-# then open http://localhost:8000
+npm install
+npm run dev          # http://localhost:3000
+npm run build        # static export into out/
 ```
 
-Deploying is a matter of serving the folder — GitHub Pages, Netlify, or any
-static host will do. Opening `index.html` straight from disk also works.
+The build is a fully static export — no server, no database, no runtime.
 
-## Layout
+## The chapters
 
-```
-index.html            the invitation, in eight scenes
-assets/css/style.css  the look; everything hangs off --t and --k
-assets/js/main.js     the projector: colour grading + scene scrubbing
-assets/qr/*.svg       map QR codes (generated, see below)
-assets/og.jpg         link preview image for WhatsApp and the like
-```
+| Chapter | Scene | Motion language |
+| ------- | ----- | --------------- |
+| Prologue | starfield, the monogram written in light | ink condensing out of blur |
+| I · The Invitation | the hosts, on an illuminated page | vines drawing themselves into the corners |
+| II · The Couple | the two names, joined | a GSAP vine braiding as you scroll |
+| III · The Day | the date, proclaimed on parchment | a wax seal pressed into the page |
+| IV · The Celebrations | engagement, ceremony, reception | rings meeting · light through an arch · a falling chandelier |
+| V · With Love | the closing regards | lanterns rising into the dark |
 
-## How the motion works
+## How it is built
 
-Two custom properties carry the whole design:
+- **Next.js** (app router, static export) with **TailwindCSS**.
+- **Framer Motion** for scroll-linked presence, staggered text, springs and
+  layout transitions; **GSAP** for the two scrubbed SVG timelines (the union
+  vine and the wax seal).
+- **Lenis** for smooth scrolling, driving `ScrollTrigger.update` so both
+  animation engines share one clock.
+- **React Three Fiber** for the starfield and golden dust, in a shader that
+  twinkles and drifts on the GPU. It is the heaviest dependency, so it is code-
+  split and mounted only in the browser — the words never wait on it.
 
-- `--t` — progress through the entire page, `0 → 1`. It drives the colour
-  grade: sky, ink, gold, the halo behind the text, and how much daylight
-  there is for the rays, clouds and vignette. The palettes are keyframe
-  timelines in `main.js` (`SKY`, `INK`, `GOLD`, `HALO`, `GLOW`), interpolated
-  each frame.
-- `--k` — how present a single scene is, `0 → 1 → 0` as it passes through the
-  viewport. Each scene is a tall block with a `position: sticky` inner frame,
-  so the words hold still while you scroll and then dissolve. Children stagger
-  off `--k` via their own `--d` delay, so nothing is timed to the clock — it is
-  all scrubbed by the scroll, and runs backwards just as well as forwards.
+Every wedding fact lives in `lib/content.ts` and nowhere else. Presentation may
+change freely; those strings are the invitation and are reused verbatim.
 
-The first scene never fades in (it is already on screen, and blooms in on
-load instead) and the last never fades out, so the invitation opens and closes
-on a held frame.
+### The two load-bearing pieces
 
-`prefers-reduced-motion` drops the sticky scenes, the canvas and the
-animations, and lays the whole invitation out as a plain, still document.
+`components/layout/Chapter.tsx` is the frame every chapter hangs off. A chapter
+is a tall scroll span with a `position: sticky` inner frame, so the words hold
+still while you scroll and then dissolve. Its `p` (0 → 1 across the span) is
+handed to the children, which choreograph themselves against it — nothing is
+timed to a clock, so the whole story scrubs backwards as well as forwards.
+
+`components/audio/engine.ts` is the soundtrack: a generative ambient score
+synthesized live in the Web Audio API. A slow triangle-wave pad drifts through
+four chords, sparse pentatonic plucks answer each other santoor-fashion, and
+high bells ring every twenty seconds or so, all through a feedback delay. No
+audio is downloaded and the score never repeats. It starts only on a user
+gesture, fades over 2.5 s, and remembers the guest's choice in `localStorage`.
+
+## Motion and stillness
+
+`prefers-reduced-motion` is honoured throughout: `MotionConfig
+reducedMotion="user"` drops transform animations, the canvas and petals never
+mount, and each chapter renders as a still, fully legible page.
+
+Two rules matter when editing the animated components, and breaking either one
+is silent:
+
+- Call every hook before any `calm` early-return. `useCalm()` reports `false` on
+  the first render and its real value after mount, so a `useTransform` sitting
+  below a conditional return will vanish on the second render and take the page
+  down with it.
+- When a `calm` branch stops animating a property, set that property explicitly
+  (`opacity: 1`, `pathLength: 1`) rather than passing `{}`. Framer-motion has
+  already written a value to the element by then, and an empty style object
+  leaves it frozen there — invisible.
+
+## Deploying
+
+`.github/workflows/deploy.yml` builds the export and publishes it to GitHub
+Pages on every push. Set **Settings → Pages → Source** to **GitHub Actions**
+once; the workflow derives the base path from the repository name, so a project
+site at `/<repo>` and a `<user>.github.io` site both resolve their assets.
 
 ## The QR codes
 
-Each venue links to its location on Google Maps. The cards are tappable as
-well as scannable.
+Each venue links to its location on Google Maps. The cards are tappable as well
+as scannable.
 
-| Scene      | Venue                            |
+| Chapter    | Venue                            |
 | ---------- | -------------------------------- |
 | Ceremony   | St. Casimir's Church, Kadavoor   |
 | Reception  | Bishop Jerome Convention Hall    |
@@ -76,9 +110,5 @@ pip install segno
 python3 tools/qr.py --verify            # add opencv-python-headless + pillow
 ```
 
-The `<a href>` in `index.html` has to be updated to match — the link and the QR
+The map URL in `lib/content.ts` has to be updated to match — the link and the QR
 carry the same URL, and nothing checks that they agree.
-
-One deployment note: `og:image` is a relative path, which some link-preview
-scrapers resolve and some do not. If the invitation goes out on a domain of its
-own, make it absolute.

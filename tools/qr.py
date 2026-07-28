@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the venue QR codes in assets/qr/.
+"""Generate the venue QR codes in public/assets/qr/.
 
 Each code carries a Google Maps link for one venue. Keep the URLs short —
 a longer string needs a denser symbol, which is harder to scan from a phone
@@ -18,7 +18,7 @@ import sys
 
 import segno
 
-OUT = pathlib.Path(__file__).resolve().parent.parent / "assets" / "qr"
+OUT = pathlib.Path(__file__).resolve().parent.parent / "public" / "assets" / "qr"
 
 VENUES = {
     "church": "https://maps.google.com/?q=St+Casimirs+Church+Kadavoor+Kollam",
@@ -55,7 +55,7 @@ def build():
             light=None,
         )
         codes[name] = (url, qr)
-        print(f"{name:11} version {qr.version:>2}  {qr.symbol_size(border=0)[0]} modules  -> {path.relative_to(OUT.parent.parent)}")
+        print(f"{name:11} version {qr.version:>2}  {qr.symbol_size(border=0)[0]} modules  -> {path.relative_to(OUT.parent.parent.parent)}")
     return codes
 
 

@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #d4af6a;
+  --gold-bright: #f0d494;
+  --gold-deep: #9c7430;
+  --ink: #f6f1e7;
+  --vh-fix: 100svh;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  @apply bg-abyss text-pearl font-body antialiased;
+  overflow-x: clip;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(212, 175, 106, 0.35);
+  color: #fdf9f0;
+}
+
+/* ————— gilded text ————— */
+.text-gilt {
+  background: linear-gradient(
+    105deg,
+    #8a6a35 0%,
+    #d4af6a 28%,
+    #f7e3ae 46%,
+    #fff6dd 50%,
+    #f7e3ae 54%,
+    #d4af6a 72%,
+    #8a6a35 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gilt-sheen 9s ease-in-out infinite;
+}
+
+@keyframes gilt-sheen {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+/* ————— engraved marble lettering ————— */
+.text-engraved {
+  color: #efe6d2;
+  text-shadow:
+    0 1px 0 rgba(255, 250, 235, 0.16),
+    0 -1px 1px rgba(0, 0, 0, 0.55),
+    0 0 26px rgba(212, 175, 106, 0.22);
+}
+
+/* ————— aged paper panel ————— */
+.paper {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 244, 214, 0.06), transparent 60%),
+    linear-gradient(168deg, rgba(64, 52, 34, 0.5), rgba(28, 22, 14, 0.62));
+  border: 1px solid rgba(212, 175, 106, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.08),
+    inset 0 0 60px rgba(0, 0, 0, 0.35),
+    0 30px 80px -30px rgba(0, 0, 0, 0.8);
+}
+
+/* ————— hairline gold rules ————— */
+.rule-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 106, 0.85), transparent);
+}
+
+/* ————— film grain + vignette overlays ————— */
+.grain {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 70;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 1.4s steps(4) infinite;
+}
+
+@keyframes grain-shift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2%, 1.4%); }
+  50% { transform: translate(1.6%, -1%); }
+  75% { transform: translate(-1%, -1.8%); }
+  100% { transform: translate(0, 0); }
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background:
+    radial-gradient(130% 100% at 50% 50%, transparent 58%, rgba(2, 3, 8, 0.55) 100%);
+}
+
+/* ————— candle flame ————— */
+.flame {
+  position: relative;
+  display: block;
+  width: 10px;
+  height: 22px;
+  border-radius: 50% 50% 42% 42% / 62% 62% 38% 38%;
+  background: radial-gradient(50% 65% at 50% 72%, #fff8e0 0%, #ffd9a0 38%, #f59d3d 70%, rgba(200, 90, 20, 0) 100%);
+  filter: drop-shadow(0 0 14px rgba(255, 190, 110, 0.75));
+  transform-origin: 50% 92%;
+  animation: flicker 2.7s ease-in-out infinite;
+}
+
+.flame::after {
+  content: '';
+  position: absolute;
+  inset: 38% 30% 12% 30%;
+  border-radius: inherit;
+  background: radial-gradient(closest-side, rgba(120, 170, 255, 0.55), transparent 75%);
+}
+
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(-1.4deg); opacity: 0.94; }
+  22% { transform: scale(1.06, 0.94) rotate(1.8deg); opacity: 1; }
+  47% { transform: scale(0.95, 1.08) rotate(-2.4deg); opacity: 0.9; }
+  71% { transform: scale(1.04, 0.97) rotate(1.2deg); opacity: 1; }
+}
+
+/* ————— custom cursor ————— */
+@media (pointer: fine) {
+  .cursor-none-global, .cursor-none-global a, .cursor-none-global button {
+    cursor: none;
+  }
+}
+
+/* ————— reduced motion: everything settles ————— */
+@media (prefers-reduced-motion: reduce) {
+  .grain { animation: none; }
+  .flame { animation: none; }
+  .text-gilt { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

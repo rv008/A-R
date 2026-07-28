@@ -1,2 +1,7 @@
 .DS_Store
-__pycache__/
+Thumbs.db
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
