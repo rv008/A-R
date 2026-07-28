@@ -1,15 +1,17 @@
 # Ronald & Amala
 
-A one-page wedding invitation for **Ronald Varghese** and **Amala Wilson** —
+An e-invite for **Ronald Varghese** and **Amala Wilson** —
 Monday, 14 September 2026, St. Casimir's Church, Kadavoor, Kollam.
 
-The page is meant to be watched rather than read. Scrolling is the timeline:
-the sky is graded continuously from night to full morning, and each scene
-dissolves in and out of the frame like a shot in a film.
+It is an invitation, not a wedding website. One card, three places to be, and a
+sign-off — the things a guest actually needs, in the order they need them. The
+long version (addresses, travel, the full order of the day) deliberately isn't
+here; an invitation that has to be scrolled twice to find the time has stopped
+being an invitation.
 
 ## Running it
 
-It is a static site with no build step and no dependencies.
+A static page with no build step and no dependencies.
 
 ```sh
 python3 -m http.server 8000
@@ -22,54 +24,79 @@ static host will do. Opening `index.html` straight from disk also works.
 ## Layout
 
 ```
-index.html            the invitation, in eight scenes
-assets/css/style.css  the look; everything hangs off --t and --k
-assets/js/main.js     the projector: colour grading + scene scrubbing
+index.html            the invitation
+assets/css/style.css  the look
+assets/js/main.js     countdown, .ics, share, reveal-on-scroll
 assets/qr/*.svg       map QR codes (generated, see below)
 assets/og.jpg         link preview image for WhatsApp and the like
+tools/og.html         the source of that preview image
+tools/qr.py           the source of the QR codes
 ```
 
-## How the motion works
+## The design
 
-Two custom properties carry the whole design:
+Terracotta on warm ivory, a high-contrast serif for anything large and a
+geometric sans for anything small. The arch on the card is the one shape doing
+real work: it reads as stationery before a word has been parsed, and it costs a
+`border-radius`.
 
-- `--t` — progress through the entire page, `0 → 1`. It drives the colour
-  grade: sky, ink, gold, the halo behind the text, and how much daylight
-  there is for the rays, clouds and vignette. The palettes are keyframe
-  timelines in `main.js` (`SKY`, `INK`, `GOLD`, `HALO`, `GLOW`), interpolated
-  each frame.
-- `--k` — how present a single scene is, `0 → 1 → 0` as it passes through the
-  viewport. Each scene is a tall block with a `position: sticky` inner frame,
-  so the words hold still while you scroll and then dissolve. Children stagger
-  off `--k` via their own `--d` delay, so nothing is timed to the clock — it is
-  all scrubbed by the scroll, and runs backwards just as well as forwards.
+Both faces are self-hosted variable fonts, latin subset, so the invitation looks
+the same on any network and offline.
 
-The first scene never fades in (it is already on screen, and blooms in on
-load instead) and the last never fades out, so the invitation opens and closes
-on a held frame.
+Everything is one column, sized in `clamp()`, and centred in a sheet that stops
+at `68rem`. There is no phone layout and desktop layout — there is one layout
+that has been checked for horizontal overflow from 320 px up to 1800 px. Two
+breakpoints exist:
 
-`prefers-reduced-motion` drops the sticky scenes, the canvas and the
-animations, and lays the whole invitation out as a plain, still document.
+- **46rem** — the map QR codes appear. They are worthless on the phone you are
+  already holding and genuinely useful on a laptop, so they only show up where
+  they earn the space.
+- **58rem** — the three event cards go from a stack to a row. Not sooner: below
+  this, a third of the row is narrower than the longest venue name and the grid
+  buckles past the viewport.
+
+## The moving parts
+
+Four small things, each of which the page survives without:
+
+- **The countdown** to the ceremony, which flips to *Married* once the day has
+  passed.
+- **Add to calendar** builds a two-event `.ics` (engagement and wedding) in the
+  browser and hands it over as a download. Times are written in UTC — Kerala is
+  a flat UTC+05:30 — so the viewer's own timezone never enters into it. Lines
+  are folded at 75 octets, which RFC 5545 requires and some calendar apps
+  actually enforce.
+- **Share the invite** uses the native share sheet where there is one and the
+  clipboard everywhere else. This is a link that mostly travels by WhatsApp.
+- **Reveal on scroll**, done with a scroll listener rather than an
+  `IntersectionObserver`. The observer only reports threshold crossings, so
+  flinging the scrollbar or landing mid-page leaves whatever got skipped stuck
+  at `opacity: 0`. Walking a list of seven elements once a frame cannot miss.
+
+`prefers-reduced-motion` stops the ticker, the seal and every entrance, and
+lays the invitation out as a plain, still document.
+
+## Adding an RSVP
+
+There isn't one, because there is no number to send it to. `index.html` carries
+a commented-out block just after the events section — drop it in, put a real
+number in both places, and nothing else needs to change.
 
 ## The QR codes
 
-Each venue links to its location on Google Maps. The cards are tappable as
-well as scannable.
+Each venue links to its location on Google Maps. The cards are tappable as well
+as scannable.
 
-| Scene      | Venue                            |
+| Card       | Venue                            |
 | ---------- | -------------------------------- |
+| Engagement | Millennium Hall, Tangasseri      |
 | Ceremony   | St. Casimir's Church, Kadavoor   |
 | Reception  | Bishop Jerome Convention Hall    |
-| Engagement | Millennium Hall, Tangasseri      |
 
 They were generated with [segno](https://github.com/heuer/segno) at error
-correction level M, which keeps each symbol to 33–37 modules. That size matters:
-at level Q the church code needed 41 modules, and rendered at phone size it
-stopped decoding. The codes are drawn at a minimum of 152 px so a camera
-resolves roughly four device pixels per module.
-
-To change a venue, edit `VENUES` in `tools/qr.py` and re-run it. `--verify`
-decodes each symbol back and checks it resolves to the URL it was built from:
+correction level M, which keeps each symbol to 33–37 modules. To change a venue,
+edit `VENUES` in `tools/qr.py` and re-run it. `--verify` decodes each symbol back
+and checks it resolves to the URL it was built from:
 
 ```sh
 pip install segno
@@ -78,6 +105,26 @@ python3 tools/qr.py --verify            # add opencv-python-headless + pillow
 
 The `<a href>` in `index.html` has to be updated to match — the link and the QR
 carry the same URL, and nothing checks that they agree.
+
+## The preview image
+
+`assets/og.jpg` is a screenshot of `tools/og.html`, which pulls in the real
+stylesheet and the real fonts so it cannot drift from the invitation. Re-render
+it after any change to the type or the palette:
+
+```sh
+python3 -m http.server 8000
+python3 - <<'PY'
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    pg = b.new_page(viewport={"width": 1200, "height": 630})
+    pg.goto("http://localhost:8000/tools/og.html", wait_until="networkidle")
+    pg.wait_for_timeout(800)
+    pg.screenshot(path="assets/og.jpg", type="jpeg", quality=90)
+    b.close()
+PY
+```
 
 One deployment note: `og:image` is a relative path, which some link-preview
 scrapers resolve and some do not. If the invitation goes out on a domain of its

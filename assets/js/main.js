@@ -1,308 +1,199 @@
 /* ============================================================
-   Ronald & Amala — the projector.
+   Ronald & Amala — the small amount of script an invite needs.
 
-   One rAF loop does three things:
-     1. grades the sky from night to morning across the scroll
-     2. scrubs each scene's presence (--k) so it dissolves in and out
-     3. drifts stars, then light, across a canvas
+     1. the countdown to the ceremony
+     2. "add to calendar" → a two-event .ics, built in the browser
+     3. "share the invite" → the native sheet, or the clipboard
+     4. reveal-on-scroll for everything below the card
+
+   No dependencies, no build step. If any of it fails the page is
+   still a complete invitation.
    ============================================================ */
 
 (() => {
   'use strict';
 
-  const root = document.documentElement;
   const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
-  /* ── small maths ─────────────────────────────────────────── */
+  /* Kerala is UTC+05:30 all year, so the two moments are unambiguous.
+     Kept in UTC to sidestep the viewer's own timezone entirely. */
+  const CEREMONY = Date.UTC(2026, 8, 14, 6, 0);   // 14 Sep 2026, 11:30 IST
+  const ENGAGEMENT = Date.UTC(2026, 8, 6, 6, 0);  //  6 Sep 2026, 11:30 IST
 
-  const clamp = (v, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
-  const lerp = (a, b, m) => a + (b - a) * m;
+  /* ── 1 · the countdown ───────────────────────────────────── */
 
-  const smooth = (edge0, edge1, x) => {
-    const t = clamp((x - edge0) / (edge1 - edge0));
-    return t * t * (3 - 2 * t);
+  const count = document.getElementById('count');
+
+  const tick = () => {
+    if (!count) return;
+    const left = CEREMONY - Date.now();
+
+    if (left <= 0) {
+      count.className = 'count count--done';
+      count.textContent = 'Married — 14 September 2026';
+      count.hidden = false;
+      return true;                                   // nothing left to run
+    }
+
+    const mins = Math.floor(left / 60000);
+    const parts = {
+      d: Math.floor(mins / 1440),
+      h: Math.floor(mins / 60) % 24,
+      m: mins % 60,
+    };
+
+    for (const key in parts) {
+      const cell = count.querySelector(`[data-count="${key}"]`);
+      if (cell) cell.textContent = String(parts[key]).padStart(2, '0');
+    }
+
+    count.hidden = false;
+    return false;
   };
 
-  const hex = (h) => [
-    parseInt(h.slice(1, 3), 16),
-    parseInt(h.slice(3, 5), 16),
-    parseInt(h.slice(5, 7), 16),
+  if (count && !tick()) {
+    setInterval(() => tick(), 10000);
+  }
+
+  /* ── 2 · the calendar file ───────────────────────────────── */
+
+  /* RFC 5545 reserves these inside a text value, and Google Calendar is
+     unforgiving about it. */
+  const esc = (s) => s.replace(/([\\,;])/g, '\\$1').replace(/\n/g, '\\n');
+
+  /* RFC 5545 caps a content line at 75 octets; the rest continues on a line
+     beginning with a space. Everything here is ASCII, so chars are octets. */
+  const fold = (line) => (line.length <= 74 ? line : line.match(/.{1,74}/g).join('\r\n '));
+
+  const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  const event = ({ uid, start, hours, summary, where, note }) => [
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stamp(Date.now())}`,
+    `DTSTART:${stamp(start)}`,
+    `DTEND:${stamp(start + hours * 3600000)}`,
+    `SUMMARY:${esc(summary)}`,
+    `LOCATION:${esc(where)}`,
+    `DESCRIPTION:${esc(note)}`,
+    'END:VEVENT',
   ];
 
-  /* Reads a value off a keyframe timeline: [[t, value], …] */
-  const along = (stops, t, mix) => {
-    if (t <= stops[0][0]) return stops[0][1];
-    for (let i = 1; i < stops.length; i++) {
-      if (t <= stops[i][0]) {
-        const [t0, v0] = stops[i - 1];
-        const [t1, v1] = stops[i];
-        return mix(v0, v1, smooth(t0, t1, t));
+  const ics = () => [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Ronald and Amala//Wedding 2026//EN',
+    'CALSCALE:GREGORIAN',
+    ...event({
+      uid: 'ra-engagement-20260906@ronald-amala',
+      start: ENGAGEMENT,
+      hours: 3,
+      summary: 'Engagement - Ronald & Amala',
+      where: 'Millennium Hall, Tangasseri, Kollam',
+      note: 'Sunday, 6 September 2026 at 11:30 am.',
+    }),
+    ...event({
+      uid: 'ra-wedding-20260914@ronald-amala',
+      start: CEREMONY,
+      hours: 4,
+      summary: 'Wedding of Ronald & Amala',
+      where: "St. Casimir's Church, Kadavoor, Kollam",
+      note: "Ceremony at St. Casimir's Church, Kadavoor, at 11:30 am. Reception to follow at Bishop Jerome Convention Hall, Kollam.",
+    }),
+    'END:VCALENDAR',
+  ].map(fold).join('\r\n');
+
+  /* ── 3 · the buttons ─────────────────────────────────────── */
+
+  const toast = document.getElementById('toast');
+  let clearToast;
+
+  const say = (words) => {
+    if (!toast) return;
+    toast.textContent = words;
+    toast.classList.add('is-on');
+    clearTimeout(clearToast);
+    clearToast = setTimeout(() => toast.classList.remove('is-on'), 3200);
+  };
+
+  const cal = document.getElementById('cal');
+
+  if (cal) {
+    cal.addEventListener('click', () => {
+      const url = URL.createObjectURL(new Blob([ics()], { type: 'text/calendar;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ronald-and-amala.ics';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      /* revoked late, because Safari reads the blob after the click returns */
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      say('Both dates, saved');
+    });
+  }
+
+  const share = document.getElementById('share');
+
+  if (share) {
+    share.addEventListener('click', async () => {
+      const payload = {
+        title: 'Ronald & Amala',
+        text: "We're getting married — 14 September 2026, Kollam.",
+        url: location.href,
+      };
+
+      try {
+        if (navigator.share) {
+          await navigator.share(payload);
+          return;
+        }
+        await navigator.clipboard.writeText(location.href);
+        say('Link copied');
+      } catch (err) {
+        /* the user backing out of the share sheet is not a failure */
+        if (err && err.name === 'AbortError') return;
+        say(location.host || 'Copy the address bar');
+      }
+    });
+  }
+
+  /* ── 4 · reveal on scroll ────────────────────────────────── */
+
+  const waiting = [...document.querySelectorAll('.reveal')];
+
+  if (calm.matches) {
+    for (const el of waiting) el.classList.add('is-in');
+    return;
+  }
+
+  /* Deliberately a scroll check rather than an IntersectionObserver: the
+     observer only reports threshold crossings, so flinging the scrollbar or
+     landing mid-page leaves whatever was skipped stuck at opacity 0. Walking
+     a list of seven elements once a frame costs nothing and cannot miss. */
+  let queued = false;
+
+  const settle = () => {
+    queued = false;
+    const line = innerHeight * 0.88;
+
+    for (let i = waiting.length - 1; i >= 0; i--) {
+      if (waiting[i].getBoundingClientRect().top < line) {
+        waiting[i].classList.add('is-in');
+        waiting.splice(i, 1);
       }
     }
-    return stops[stops.length - 1][1];
-  };
 
-  const mixNum = (a, b, m) => lerp(a, b, m);
-
-  const mixTriple = (a, b, m) => {
-    const out = [];
-    for (let i = 0; i < 3; i++) {
-      const c0 = hex(a[i]);
-      const c1 = hex(b[i]);
-      out.push(
-        `rgb(${Math.round(lerp(c0[0], c1[0], m))} ${Math.round(lerp(c0[1], c1[1], m))} ${Math.round(lerp(c0[2], c1[2], m))})`
-      );
-    }
-    return out;
-  };
-
-  /* ── the colour script ───────────────────────────────────── */
-  /* top of sky, middle, horizon — the hour of the day, in three notes */
-
-  const SKY = [
-    [0.00, ['#080c20', '#141a3a', '#2c2b55']], // before dawn
-    [0.16, ['#1b1c40', '#43305c', '#a86c74']], // first colour
-    [0.34, ['#5d4a72', '#c4838a', '#f3c49c']], // the sun arrives
-    [0.50, ['#a695b8', '#efd3bc', '#fdf1e0']], // the light opens
-    [0.70, ['#c9bcc9', '#f7e6d2', '#fffaf2']], // full morning
-    [0.88, ['#d9c9b8', '#f6e5cb', '#fffbf2']],
-    [1.00, ['#e0cdb5', '#f8ead2', '#fffdf7']], // and it stays
-  ];
-
-  /* Ink, gold and halo turn from light to dark together, and quickly —
-     lingering halfway would leave mid-tone text on a mid-tone sky, which is
-     where legibility dies. The two stops in the middle of each timeline are
-     retimed in `retime()` to land on the seam between two scenes, so the
-     turn happens while the screen is empty and is never seen. */
-  const INK = [
-    [0.00, ['#f6efe6', '#f6efe6', '#f6efe6']],
-    [0.29, ['#f6efe6', '#f6efe6', '#f6efe6']],
-    [0.37, ['#3a2e20', '#3a2e20', '#3a2e20']],
-    [1.00, ['#2c2318', '#2c2318', '#2c2318']],
-  ];
-
-  const GOLD = [
-    [0.00, ['#e6c78d', '#e6c78d', '#e6c78d']],
-    [0.29, ['#eec894', '#eec894', '#eec894']],
-    [0.37, ['#9c7430', '#9c7430', '#9c7430']],
-    [1.00, ['#8a6528', '#8a6528', '#8a6528']],
-  ];
-
-  /* the glow behind the words: dark early, luminous later — it is what
-     holds the contrast up while the sky moves underneath */
-  const HALO = [
-    [0.00, [6, 10, 30, 0.62]],
-    [0.29, [16, 14, 40, 0.62]],
-    [0.37, [255, 249, 238, 0.78]],
-    [1.00, [255, 252, 245, 0.9]],
-  ];
-
-  const mixRGBA = (a, b, m) =>
-    `rgba(${Math.round(lerp(a[0], b[0], m))}, ${Math.round(lerp(a[1], b[1], m))}, ${Math.round(lerp(a[2], b[2], m))}, ${lerp(a[3], b[3], m).toFixed(3)})`;
-
-  /* how much daylight there is — drives rays, clouds, vignette */
-  const GLOW = [[0.0, 0], [0.22, 0.15], [0.5, 0.75], [0.78, 1], [1, 0.85]];
-
-  /* ── scenes ──────────────────────────────────────────────── */
-
-  const scenes = [...document.querySelectorAll('[data-scene]')];
-  const bar = document.getElementById('filmBar');
-  const cue = document.getElementById('cue');
-
-  let vh = innerHeight;
-  let docSpan = 1;
-
-  /* Which seam the day breaks on: the gap between the couple's names and the
-     date. Everything is measured, so changing a scene's height in the CSS
-     moves the sunrise with it. */
-  const TURN_AFTER = 3;
-
-  const retime = () => {
-    const scene = scenes[TURN_AFTER];
-    if (!scene) return;
-    const seam = clamp(scene._top / docSpan, 0.12, 0.88);
-    const a = seam - 0.014;
-    const b = seam + 0.017;
-    for (const timeline of [INK, GOLD, HALO]) {
-      timeline[1][0] = a;
-      timeline[2][0] = b;
-    }
-  };
-
-  const measure = () => {
-    vh = innerHeight;
-    docSpan = Math.max(1, document.body.scrollHeight - vh);
-    for (const s of scenes) {
-      /* the pinned frame's real height, which on mobile is 100svh and so
-         not the same thing as innerHeight */
-      const frame = s.firstElementChild.getBoundingClientRect().height || vh;
-      s._top = s.offsetTop;
-      s._span = Math.max(1, s.offsetHeight - frame);
-      s._open = s === scenes[0];
-      s._close = s === scenes[scenes.length - 1];
-    }
-    retime();
-  };
-
-  /* ── the loop ────────────────────────────────────────────── */
-
-  let queued = false;
-  let lastY = -1;
-
-  const draw = () => {
-    queued = false;
-    const y = scrollY;
-    const t = clamp(y / docSpan);
-
-    /* 1 — grade the sky */
-    const sky = along(SKY, t, mixTriple);
-    const ink = along(INK, t, mixTriple)[0];
-    const gold = along(GOLD, t, mixTriple)[0];
-    const halo = along(HALO, t, mixRGBA);
-    const glow = along(GLOW, t, mixNum);
-
-    root.style.setProperty('--t', t.toFixed(4));
-    root.style.setProperty('--sky-1', sky[0]);
-    root.style.setProperty('--sky-2', sky[1]);
-    root.style.setProperty('--sky-3', sky[2]);
-    root.style.setProperty('--ink', ink);
-    root.style.setProperty('--gold', gold);
-    root.style.setProperty('--halo', halo);
-    root.style.setProperty('--glow', glow.toFixed(3));
-
-    if (bar) bar.style.transform = `scaleX(${t.toFixed(4)})`;
-
-    /* 2 — scrub each scene in and out of view.
-       The first scene is already on screen, so it never fades in;
-       the last one is the closing frame, so it never fades out. */
-    for (const s of scenes) {
-      const p = clamp((y - s._top) / s._span);
-      /* the windows meet at the seam between scenes, so one frame is gone
-         exactly as the next arrives — a dip through empty sky, not a pause */
-      const kIn = s._open ? 1 : smooth(0, 0.1, p);
-      const kOut = s._close ? 1 : 1 - smooth(0.9, 1, p);
-      s.style.setProperty('--p', p.toFixed(4));
-      s.style.setProperty('--k', (kIn * kOut).toFixed(4));
-    }
-
-    /* 3 — the scroll cue bows out once you've begun */
-    if (cue) cue.classList.toggle('is-gone', y > vh * 0.25);
-
-    starAlpha = 1 - smooth(0.02, 0.26, t);
-    moteAlpha = smooth(0.22, 0.46, t);
-    lastY = y;
+    if (!waiting.length) removeEventListener('scroll', onScroll);
   };
 
   const onScroll = () => {
-    if (!queued) {
-      queued = true;
-      requestAnimationFrame(draw);
-    }
-  };
-
-  /* ── stars, and then the light ───────────────────────────── */
-
-  const canvas = document.getElementById('motes');
-  const ctx = canvas && canvas.getContext('2d');
-  let stars = [];
-  let motes = [];
-  let starAlpha = 1;
-  let moteAlpha = 0;
-  let dpr = 1;
-
-  const seed = () => {
-    if (!ctx) return;
-    dpr = Math.min(devicePixelRatio || 1, 2);
-    canvas.width = innerWidth * dpr;
-    canvas.height = innerHeight * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const area = innerWidth * innerHeight;
-    const nStars = Math.round(clamp(area / 9000, 40, 150));
-    const nMotes = Math.round(clamp(area / 26000, 18, 60));
-
-    stars = Array.from({ length: nStars }, () => ({
-      x: Math.random() * innerWidth,
-      y: Math.random() * innerHeight,
-      r: Math.random() * 1.1 + 0.3,
-      a: Math.random() * 0.6 + 0.25,
-      s: Math.random() * 0.9 + 0.25,      // twinkle speed
-      o: Math.random() * Math.PI * 2,     // twinkle offset
-    }));
-
-    motes = Array.from({ length: nMotes }, () => ({
-      x: Math.random() * innerWidth,
-      y: Math.random() * innerHeight,
-      r: Math.random() * 2.6 + 0.8,
-      a: Math.random() * 0.4 + 0.18,
-      v: Math.random() * 0.16 + 0.05,     // rise
-      w: Math.random() * 0.7 + 0.25,      // sway
-      o: Math.random() * Math.PI * 2,
-    }));
-  };
-
-  const paint = (now) => {
-    requestAnimationFrame(paint);
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    const ms = now * 0.001;
-
-    if (starAlpha > 0.01) {
-      for (const st of stars) {
-        const tw = 0.65 + 0.35 * Math.sin(ms * st.s + st.o);
-        ctx.globalAlpha = st.a * tw * starAlpha;
-        ctx.fillStyle = '#fdf6e8';
-        ctx.beginPath();
-        ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    if (moteAlpha > 0.01) {
-      for (const m of motes) {
-        m.y -= m.v;
-        if (m.y < -12) {
-          m.y = innerHeight + 12;
-          m.x = Math.random() * innerWidth;
-        }
-        const x = m.x + Math.sin(ms * m.w + m.o) * 14;
-        const g = ctx.createRadialGradient(x, m.y, 0, x, m.y, m.r * 4.5);
-        g.addColorStop(0, 'rgba(255, 246, 224, .95)');
-        g.addColorStop(1, 'rgba(255, 236, 198, 0)');
-        ctx.globalAlpha = m.a * moteAlpha;
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, m.y, m.r * 4.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.globalAlpha = 1;
-  };
-
-  /* ── go ──────────────────────────────────────────────────── */
-
-  const start = () => {
-    measure();
-    draw();
-    if (!calm.matches) {
-      seed();
-      requestAnimationFrame(paint);
-    } else if (canvas) {
-      canvas.style.display = 'none';
-    }
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(settle);
   };
 
   addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', () => {
-    measure();
-    if (!calm.matches) seed();
-    draw();
-  }, { passive: true });
-
-  addEventListener('load', () => { measure(); draw(); });
-  document.fonts && document.fonts.ready.then(() => { measure(); draw(); });
-
-  start();
+  addEventListener('resize', onScroll, { passive: true });
+  settle();
 })();

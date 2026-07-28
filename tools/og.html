@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; }
+
+  .og {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(105% 78% at 50% -18%, #fffdf8 0%, rgba(255, 253, 248, 0) 62%),
+      radial-gradient(62% 62% at 106% 112%, rgba(192, 90, 52, .13) 0%, rgba(192, 90, 52, 0) 62%),
+      radial-gradient(55% 55% at -6% 106%, rgba(140, 128, 88, .12) 0%, rgba(140, 128, 88, 0) 60%),
+      var(--paper);
+  }
+
+  .og__frame {
+    width: 1104px;
+    height: 534px;
+    border: 1px solid rgba(192, 90, 52, .3);
+    border-radius: 260px 260px 6px 6px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+
+  .og__eyebrow {
+    margin: 0 0 26px;
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: .42em;
+    text-indent: .42em;
+    text-transform: uppercase;
+    color: var(--clay-ink);
+  }
+
+  .og__names {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 26px;
+    margin: 0;
+    font-weight: 300;
+    font-size: 116px;
+    line-height: 1;
+    letter-spacing: .006em;
+    color: var(--ink);
+  }
+
+  .og__amp { font-style: italic; font-size: 60px; color: var(--clay); rotate: -8deg; }
+
+  .og__squiggle { display: block; width: 168px; margin: 34px auto 30px; color: var(--clay); opacity: .8; }
+
+  .og__when {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 19px;
+    letter-spacing: .3em;
+    text-indent: .3em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+
+  .og__where { margin: 16px 0 0; font-size: 27px; font-style: italic; color: var(--ink-2); }
+</style>
+</head><body>
+<div class="og"><div class="og__frame"><div>
+  <p class="og__eyebrow">Together with our families</p>
+  <p class="og__names"><span>Ronald</span><span class="og__amp">&amp;</span><span>Amala</span></p>
+  <svg class="og__squiggle" viewBox="0 0 124 14" fill="none">
+    <path d="M2 7C10 1 18 1 26 7S42 13 50 7 66 1 74 7 90 13 98 7 114 1 122 7"
+          stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </svg>
+  <p class="og__when">Monday · 14 September 2026 · 11:30 am</p>
+  <p class="og__where">St. Casimir&rsquo;s Church, Kadavoor, Kollam</p>
+</div></div></div>
+</body></html>
