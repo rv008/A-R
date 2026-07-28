@@ -80,10 +80,26 @@ is silent:
 
 ## Deploying
 
-`.github/workflows/deploy.yml` builds the export and publishes it to GitHub
-Pages on every push. Set **Settings → Pages → Source** to **GitHub Actions**
-once; the workflow derives the base path from the repository name, so a project
-site at `/<repo>` and a `<user>.github.io` site both resolve their assets.
+`.github/workflows/deploy.yml` installs, builds, and publishes `out/` to GitHub
+Pages from the Actions artifact — there is no `gh-pages` branch. The base path
+is derived from the repository name, so a project site at `/<repo>` and a
+`<user>.github.io` site both resolve their assets.
+
+Two settings have to be right, and neither can be set from the workflow:
+
+> Settings → Pages → Build and deployment → **Source: GitHub Actions**
+
+Until that is saved, the run fails at `configure-pages` with *Get Pages site
+failed*. `GITHUB_TOKEN` is not permitted to create the Pages site, so
+`enablement: true` does not help — it fails with *Resource not accessible by
+integration* instead.
+
+The second is the `github-pages` environment. By default it only allows
+deployments from the default branch, so a run on a feature branch builds and
+uploads the artifact and then fails the `deploy` job instantly, with no logs
+and no runner assigned. That is expected; the deploy succeeds once the branch
+is merged. Once both are in place the site is live at
+`https://rv008.github.io/A-R/`.
 
 ## The QR codes
 
