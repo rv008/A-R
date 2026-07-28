@@ -16,8 +16,25 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Deploying is a matter of serving the folder — GitHub Pages, Netlify, or any
-static host will do. Opening `index.html` straight from disk also works.
+Opening `index.html` straight from disk also works.
+
+## Deploying
+
+`.github/workflows/pages.yml` publishes `main` to GitHub Pages on every push.
+It uploads the repository root as the site and deploys it from the Actions
+artifact, so there is no `gh-pages` branch — everything lives on `main`.
+
+Pages has to be switched on once by hand before the first deploy can succeed:
+
+> Settings → Pages → Build and deployment → **Source: GitHub Actions**
+
+The workflow cannot do this itself — `GITHUB_TOKEN` is not permitted to create
+a Pages site, so until the setting is saved the run fails at `configure-pages`
+with *Resource not accessible by integration*. Once saved, re-run the workflow
+(Actions → Deploy to GitHub Pages → Run workflow) and the site goes live at
+`https://rv008.github.io/A-R/`.
+
+Any other static host works too — it is a plain folder of files.
 
 ## Layout
 
