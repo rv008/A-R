@@ -20,9 +20,12 @@ import segno
 
 OUT = pathlib.Path(__file__).resolve().parent.parent / "assets" / "qr"
 
+# The church and reception are shared Google Maps pins, which drop straight
+# onto the right building instead of onto a search for its name. They are also
+# far shorter than a ?q= search, so both symbols come out a version smaller.
 VENUES = {
-    "church": "https://maps.google.com/?q=St+Casimirs+Church+Kadavoor+Kollam",
-    "reception": "https://maps.google.com/?q=Bishop+Jerome+Convention+Hall+Kollam",
+    "church": "https://maps.app.goo.gl/SfrjL5RweDBHgZay5",
+    "reception": "https://maps.app.goo.gl/VTc9bbeUsZ3HXoT86",
     "engagement": "https://maps.google.com/?q=Millennium+Hall+Tangasseri+Kollam",
 }
 

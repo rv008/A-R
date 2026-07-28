@@ -1,13 +1,15 @@
-# Ronald & Amala
+# Ronald ♥ Amala
 
 An e-invite for **Ronald Varghese** and **Amala Wilson** —
 Monday, 14 September 2026, St. Casimir's Church, Kadavoor, Kollam.
 
-It is an invitation, not a wedding website. One card, three places to be, and a
-sign-off — the things a guest actually needs, in the order they need them. The
-long version (addresses, travel, the full order of the day) deliberately isn't
-here; an invitation that has to be scrolled twice to find the time has stopped
-being an invitation.
+It is an invitation, not a wedding website, and it is exactly two pages. The
+first is the card: who, when, how long to wait, and the two buttons worth
+having. The second is where to be, and a sign-off. Both are a viewport tall and
+snap, so it is read the way a card is turned over rather than scrolled through.
+
+Everything else is deliberately absent. An invitation that has to be scrolled
+twice to find the time has stopped being an invitation.
 
 ## Running it
 
@@ -41,7 +43,7 @@ resolve; both need editing if the invitation ever moves.
 index.html            the invitation
 .github/workflows/    the Pages deploy
 assets/css/style.css  the look
-assets/js/main.js     countdown, .ics, share, reveal-on-scroll
+assets/js/main.js     countdown, .ics, share, heart burst, reveal-on-scroll
 assets/qr/*.svg       map QR codes (generated, see below)
 assets/og.jpg         link preview image for WhatsApp and the like
 tools/og.html         the source of that preview image
@@ -57,6 +59,18 @@ real work: it reads as stationery before a word has been parsed, and it costs a
 
 Both faces are self-hosted variable fonts, latin subset, so the invitation looks
 the same on any network and offline.
+
+A heart stands in for the ampersand — between the names, on the seal, in the
+monogram and in the sign-off. It is one inline `<symbol>` referenced four times
+rather than a `♥` character, because U+2665 falls outside the Cormorant subset's
+`unicode-range` and would land on whatever the device substitutes. On some, that
+is a colour emoji.
+
+The soft touches are cheap: ten petals falling on a fixed layer across both
+pages, a pair of eucalyptus sprigs growing out of the base of the card, a heart
+that beats twice and rests, dots that pop as the rail comes up, and a dozen
+hearts thrown from the calendar button. All of it is CSS except the burst, and
+all of it stops under `prefers-reduced-motion`.
 
 Everything is one column, sized in `clamp()`, and centred in a sheet that stops
 at `68rem`. There is no phone layout and desktop layout — there is one layout
@@ -102,11 +116,16 @@ number in both places, and nothing else needs to change.
 Each venue links to its location on Google Maps. The cards are tappable as well
 as scannable.
 
-| Card       | Venue                            |
-| ---------- | -------------------------------- |
-| Engagement | Millennium Hall, Tangasseri      |
-| Ceremony   | St. Casimir's Church, Kadavoor   |
-| Reception  | Bishop Jerome Convention Hall    |
+| Card       | Venue                          | Link                |
+| ---------- | ------------------------------ | ------------------- |
+| Engagement | Millennium Hall, Tangasseri    | `?q=` name search   |
+| Ceremony   | St. Casimir's Church, Kadavoor | shared pin          |
+| Reception  | Bishop Jerome Convention Hall  | shared pin          |
+
+The church and reception are shared Google Maps pins, which land on the building
+rather than on a search for its name, and are short enough to bring both symbols
+down to 29 modules — a version smaller than the `?q=` search the engagement
+still uses.
 
 They were generated with [segno](https://github.com/heuer/segno) at error
 correction level M, which keeps each symbol to 33–37 modules. To change a venue,

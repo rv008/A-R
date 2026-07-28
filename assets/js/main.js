@@ -1,10 +1,10 @@
 /* ============================================================
-   Ronald & Amala — the small amount of script an invite needs.
+   Ronald ♥ Amala — the small amount of script an invite needs.
 
      1. the countdown to the ceremony
      2. "add to calendar" → a two-event .ics, built in the browser
      3. "share the invite" → the native sheet, or the clipboard
-     4. reveal-on-scroll for everything below the card
+     4. reveal-on-scroll for page two
 
    No dependencies, no build step. If any of it fails the page is
    still a complete invitation.
@@ -44,7 +44,16 @@
 
     for (const key in parts) {
       const cell = count.querySelector(`[data-count="${key}"]`);
-      if (cell) cell.textContent = String(parts[key]).padStart(2, '0');
+      if (!cell) continue;
+      const next = String(parts[key]).padStart(2, '0');
+      if (cell.textContent === next) continue;
+
+      cell.textContent = next;
+      if (calm.matches) continue;
+      /* retrigger the kick: drop the class, force a reflow, put it back */
+      cell.classList.remove('is-new');
+      void cell.offsetWidth;
+      cell.classList.add('is-new');
     }
 
     count.hidden = false;
@@ -116,6 +125,32 @@
     clearToast = setTimeout(() => toast.classList.remove('is-on'), 3200);
   };
 
+  const HEART = '<svg viewBox="0 0 32 28"><path d="M16 26.5S2.5 18.4 2.5 9.6C2.5 5.4 5.9 2 10.1 2c2.5 0 4.8 1.2 5.9 3.1C17.1 3.2 19.4 2 21.9 2c4.2 0 7.6 3.4 7.6 7.6 0 8.8-13.5 16.9-13.5 16.9z"/></svg>';
+
+  /* a dozen hearts thrown up and out from wherever the button is */
+  const burst = (el) => {
+    if (calm.matches) return;
+    const box = el.getBoundingClientRect();
+    const x = box.left + box.width / 2;
+    const y = box.top + box.height / 2;
+
+    for (let i = 0; i < 12; i++) {
+      const heart = document.createElement('span');
+      heart.className = 'burst';
+      heart.innerHTML = HEART;
+      const angle = (Math.PI / 6) * i + Math.random() * 0.4;
+      const reach = 70 + Math.random() * 70;
+      heart.style.left = `${x - 7}px`;
+      heart.style.top = `${y - 6}px`;
+      heart.style.setProperty('--dx', `${Math.cos(angle) * reach}px`);
+      /* biased upwards, so they lift rather than merely scatter */
+      heart.style.setProperty('--dy', `${Math.sin(angle) * reach - 40}px`);
+      heart.style.setProperty('--dr', `${Math.random() * 220 - 110}deg`);
+      heart.addEventListener('animationend', () => heart.remove());
+      document.body.appendChild(heart);
+    }
+  };
+
   const cal = document.getElementById('cal');
 
   if (cal) {
@@ -129,6 +164,7 @@
       a.remove();
       /* revoked late, because Safari reads the blob after the click returns */
       setTimeout(() => URL.revokeObjectURL(url), 4000);
+      burst(cal);
       say('Both dates, saved');
     });
   }
@@ -170,7 +206,7 @@
   /* Deliberately a scroll check rather than an IntersectionObserver: the
      observer only reports threshold crossings, so flinging the scrollbar or
      landing mid-page leaves whatever was skipped stuck at opacity 0. Walking
-     a list of seven elements once a frame costs nothing and cannot miss. */
+     a list of five elements once a frame costs nothing and cannot miss. */
   let queued = false;
 
   const settle = () => {
