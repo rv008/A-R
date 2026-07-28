@@ -27,10 +27,13 @@ jobs:
       # The invitation is already the artifact — there is nothing to compile.
       # Only the two things a guest actually loads get published, so the
       # README and the generators stay out of the served site.
+      # CNAME travels with the artifact rather than living only in the repo
+      # settings: an Actions deploy that publishes without one can drop the
+      # custom domain, which takes the site down until it is set again.
       - name: Stage the site
         run: |
           mkdir _site
-          cp index.html _site/
+          cp index.html CNAME _site/
           cp -r assets _site/
 
       - uses: actions/configure-pages@v5

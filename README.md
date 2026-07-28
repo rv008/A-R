@@ -24,23 +24,38 @@ Opening `index.html` straight from disk also works.
 
 ## Deploying
 
-It is live at **<https://rv008.github.io/A-R/>**.
+It is live at **<https://ronaldandamala.com>**, on GitHub Pages behind a
+domain registered through Cloudflare. `rv008.github.io/A-R/` still redirects
+there, so links shared before the move keep working.
 
 `main` is the only branch kept; pushing to it deploys.
-`.github/workflows/deploy.yml` copies `index.html` and `assets/` into `_site`
-and hands that to GitHub Pages — there is nothing to compile, so there is no
-build step to go wrong. The README and the generators in `tools/` stay out of
-the published site.
+`.github/workflows/deploy.yml` copies `index.html`, `CNAME` and `assets/` into
+`_site` and hands that to GitHub Pages — there is nothing to compile, so there
+is no build step to go wrong. The README and the generators in `tools/` stay
+out of the published site.
+
+`CNAME` is copied into the artifact rather than left to the repository
+settings alone: an Actions deploy that publishes without one can clear the
+custom domain, which takes the site down until it is set again.
 
 Every path in `index.html` is relative, so the invitation works unchanged at a
-subpath like `/A-R/` or at the root of a domain. The two exceptions are
-`og:url` and `og:image`, which have to be absolute for link previews to
-resolve; both need editing if the invitation ever moves.
+subpath or at the root of a domain. The three exceptions are `CNAME`, `og:url`
+and `og:image` — the last two have to be absolute for link previews to resolve.
+All three need editing if the invitation ever moves again.
+
+### DNS
+
+The apex is four A records and four AAAA records pointing at GitHub Pages, and
+`www` is a CNAME to `rv008.github.io`. On Cloudflare every one of them must be
+**DNS only** (grey cloud, not orange): proxying breaks the HTTP challenge
+GitHub uses to issue the certificate, and with SSL mode on Flexible it also
+puts the site in a redirect loop.
 
 ## Layout
 
 ```
 index.html            the invitation
+CNAME                 the custom domain, published with the site
 .github/workflows/    the Pages deploy
 assets/css/style.css  the look
 assets/js/main.js     countdown, .ics, share, heart burst, reveal-on-scroll
