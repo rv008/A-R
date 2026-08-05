@@ -12,7 +12,7 @@ quietly wrong page going out to a few hundred guests.
 
     python3 tools/variants.py _site
 
-Reads index.html from the repository root and writes <out>/amala/index.html.
+Reads index.html from the repository root and writes <out>/a/index.html.
 """
 
 import pathlib
@@ -41,7 +41,7 @@ EDITS = [
     (
         "og:url",
         '<meta property="og:url" content="https://ronaldandamala.com/">',
-        '<meta property="og:url" content="https://ronaldandamala.com/amala/">',
+        '<meta property="og:url" content="https://ronaldandamala.com/a/">',
     ),
     (
         "og:title",
@@ -87,7 +87,7 @@ ENGAGEMENT = re.compile(r'\n\s*<li class="rail__item[^"]*"[^>]*data-event="engag
 
 # index.html uses relative asset paths, which is what lets it sit at a domain
 # root or a /A-R/ subpath unchanged. Hers is a directory deeper, where the same
-# paths would resolve to /amala/assets/ and 404, so they are made root-absolute.
+# paths would resolve to /a/assets/ and 404, so they are made root-absolute.
 # (A <base href="/"> would be tidier but breaks the <use href="#hrt"> heart:
 # a fragment-only URL resolves against the base, and #hrt stops being local.)
 ASSETS = re.compile(r'(href|src)="assets/')
@@ -134,13 +134,13 @@ def build(out_dir):
         return None
     if '="assets/' in html:
         print("tools/variants.py: a relative asset path survived — it would 404 "
-              "from /amala/", file=sys.stderr)
+              "from /a/", file=sys.stderr)
         return None
 
-    dest = pathlib.Path(out_dir) / "amala" / "index.html"
+    dest = pathlib.Path(out_dir) / "a" / "index.html"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(html, encoding="utf-8")
-    print(f"amala      {len(EDITS)} edits, engagement removed  -> {dest}")
+    print(f"hers       {len(EDITS)} edits, engagement removed  -> {dest}")
     return dest
 
 

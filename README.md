@@ -27,7 +27,7 @@ opened from disk, because its asset paths are absolute:
 ```sh
 mkdir -p _site && cp index.html CNAME _site/ && cp -r assets _site/
 python3 tools/variants.py _site
-cd _site && python3 -m http.server 8000   # then /amala/
+cd _site && python3 -m http.server 8000   # then /a/
 ```
 
 ## Deploying
@@ -37,7 +37,7 @@ There are two copies, and they are the same invitation:
 | Link | Whose | Difference |
 | ---- | ----- | ---------- |
 | **<https://ronaldandamala.com>** | Ronald's | the full invitation |
-| **<https://ronaldandamala.com/amala/>** | Amala's | her name first, no engagement |
+| **<https://ronaldandamala.com/a/>** | Amala's | her name first, no engagement |
 
 Both are live on GitHub Pages behind a domain registered through Cloudflare.
 `rv008.github.io/A-R/` still redirects there, so links shared before the move
@@ -99,7 +99,7 @@ Two things follow from hers living one directory down:
 
 - Her asset paths are rewritten to be root-absolute. His are relative, which is
   what lets the root copy move between a subpath and a domain unchanged, but
-  from `/amala/` the same paths resolve to `/amala/assets/` and 404. A
+  from `/a/` the same paths resolve to `/a/assets/` and 404. A
   `<base href="/">` would be tidier and is wrong here — it would resolve the
   `<use href="#hrt">` heart against the base and break every heart on the page.
 - `main.js` is shared, and works out which copy it is on by reading the page
