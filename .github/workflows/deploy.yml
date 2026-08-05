@@ -36,6 +36,13 @@ jobs:
           cp index.html CNAME _site/
           cp -r assets _site/
 
+      # Amala's copy is derived from index.html rather than kept alongside it,
+      # so the two cannot drift. The script exits non-zero if index.html has
+      # moved out from under it, which fails the deploy instead of publishing
+      # a half-transformed page.
+      - name: Build Amala's copy
+        run: python3 tools/variants.py _site
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

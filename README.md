@@ -20,19 +20,34 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Opening `index.html` straight from disk also works.
+Opening `index.html` straight from disk also works. To see Amala's copy the
+way it is published, build it first — it needs to be served from a root, not
+opened from disk, because its asset paths are absolute:
+
+```sh
+mkdir -p _site && cp index.html CNAME _site/ && cp -r assets _site/
+python3 tools/variants.py _site
+cd _site && python3 -m http.server 8000   # then /amala/
+```
 
 ## Deploying
 
-It is live at **<https://ronaldandamala.com>**, on GitHub Pages behind a
-domain registered through Cloudflare. `rv008.github.io/A-R/` still redirects
-there, so links shared before the move keep working.
+There are two copies, and they are the same invitation:
+
+| Link | Whose | Difference |
+| ---- | ----- | ---------- |
+| **<https://ronaldandamala.com>** | Ronald's | the full invitation |
+| **<https://ronaldandamala.com/amala/>** | Amala's | her name first, no engagement |
+
+Both are live on GitHub Pages behind a domain registered through Cloudflare.
+`rv008.github.io/A-R/` still redirects there, so links shared before the move
+keep working.
 
 `main` is the only branch kept; pushing to it deploys.
 `.github/workflows/deploy.yml` copies `index.html`, `CNAME` and `assets/` into
-`_site` and hands that to GitHub Pages — there is nothing to compile, so there
-is no build step to go wrong. The README and the generators in `tools/` stay
-out of the published site.
+`_site`, runs `tools/variants.py` to derive Amala's copy, and hands the result
+to GitHub Pages. The README and the generators in `tools/` stay out of the
+published site.
 
 `CNAME` is copied into the artifact rather than left to the repository
 settings alone: an Actions deploy that publishes without one can clear the
@@ -60,10 +75,37 @@ CNAME                 the custom domain, published with the site
 assets/css/style.css  the look
 assets/js/main.js     countdown, .ics, share, heart burst, reveal-on-scroll
 assets/qr/*.svg       map QR codes (generated, see below)
-assets/og.jpg         link preview image for WhatsApp and the like
-tools/og.html         the source of that preview image
+assets/og*.jpg        link preview images for WhatsApp and the like
+tools/og.html         the source of those preview images
+tools/og.py           screenshots og.html into both of them
+tools/variants.py     derives Amala's copy from index.html
 tools/qr.py           the source of the QR codes
 ```
+
+## The two copies
+
+`index.html` is Ronald's. Amala's is not a second file — it is derived from his
+at deploy time by `tools/variants.py`, which swaps the name order in six places
+(title, `og:title`, the names, the seal, the monogram, the sign-off), points
+`og:url` and `og:image` at her copy, and drops the engagement.
+
+Deriving rather than duplicating is the whole point: two hand-kept copies drift
+the first time either is edited, and the one nobody looked at is the one that
+goes out wrong. Every edit the script makes is an exact named string that must
+match **once** — if `index.html` changes underneath it, it exits non-zero and
+fails the deploy rather than publishing a half-transformed page.
+
+Two things follow from hers living one directory down:
+
+- Her asset paths are rewritten to be root-absolute. His are relative, which is
+  what lets the root copy move between a subpath and a domain unchanged, but
+  from `/amala/` the same paths resolve to `/amala/assets/` and 404. A
+  `<base href="/">` would be tidier and is wrong here — it would resolve the
+  `<use href="#hrt">` heart against the base and break every heart on the page.
+- `main.js` is shared, and works out which copy it is on by reading the page
+  rather than being told: names come from the two `.names__n` elements, and the
+  engagement goes into the `.ics` only if `[data-event="engagement"]` is in the
+  DOM. The calendar therefore cannot offer an event the page does not show.
 
 ## The design
 

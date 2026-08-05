@@ -20,6 +20,14 @@
   const CEREMONY = Date.UTC(2026, 8, 14, 6, 0);   // 14 Sep 2026, 11:30 IST
   const ENGAGEMENT = Date.UTC(2026, 8, 6, 6, 0);  //  6 Sep 2026, 11:30 IST
 
+  /* There are two copies of this invitation — Ronald's and Amala's, the second
+     with her name first and no engagement. Rather than being told which one it
+     is running on, this reads the page. The calendar then cannot offer an event
+     the page does not show, and the names come out in the order shown. */
+  const names = [...document.querySelectorAll('.names__n')].map((n) => n.textContent.trim());
+  const pair = names.length === 2 ? `${names[0]} & ${names[1]}` : 'Ronald & Amala';
+  const showsEngagement = !!document.querySelector('[data-event="engagement"]');
+
   /* ── 1 · the countdown ───────────────────────────────────── */
 
   const count = document.getElementById('count');
@@ -93,19 +101,19 @@
     'VERSION:2.0',
     'PRODID:-//Ronald and Amala//Wedding 2026//EN',
     'CALSCALE:GREGORIAN',
-    ...event({
+    ...(showsEngagement ? event({
       uid: 'ra-engagement-20260906@ronald-amala',
       start: ENGAGEMENT,
       hours: 3,
-      summary: 'Engagement - Ronald & Amala',
+      summary: `Engagement - ${pair}`,
       where: 'Millennium Hall, Tangasseri, Kollam',
       note: 'Sunday, 6 September 2026 at 11:30 am.',
-    }),
+    }) : []),
     ...event({
       uid: 'ra-wedding-20260914@ronald-amala',
       start: CEREMONY,
       hours: 4,
-      summary: 'Wedding of Ronald & Amala',
+      summary: `Wedding of ${pair}`,
       where: "St. Casimir's Church, Kadavoor, Kollam",
       note: "Ceremony at St. Casimir's Church, Kadavoor, at 11:30 am. Reception to follow at Bishop Jerome Convention Hall, Kollam.",
     }),
@@ -158,14 +166,14 @@
       const url = URL.createObjectURL(new Blob([ics()], { type: 'text/calendar;charset=utf-8' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ronald-and-amala.ics';
+      a.download = `${(names.join('-and-') || 'ronald-and-amala').toLowerCase()}.ics`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       /* revoked late, because Safari reads the blob after the click returns */
       setTimeout(() => URL.revokeObjectURL(url), 4000);
       burst(cal);
-      say('Both dates, saved');
+      say(showsEngagement ? 'Both dates, saved' : 'Saved to your calendar');
     });
   }
 
@@ -174,7 +182,7 @@
   if (share) {
     share.addEventListener('click', async () => {
       const payload = {
-        title: 'Ronald & Amala',
+        title: pair,
         text: "We're getting married — 14 September 2026, Kollam.",
         url: location.href,
       };
