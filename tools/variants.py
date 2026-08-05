@@ -137,10 +137,17 @@ def build(out_dir):
               "from /a/", file=sys.stderr)
         return None
 
-    dest = pathlib.Path(out_dir) / "a" / "index.html"
+    # Written twice, to /a/index.html and /a.html. A static host resolves
+    # "/a" and "/a/" by different rules, and this link is going out to people
+    # who will type it off a printed card — it should not matter which they
+    # land on, or whether a trailing slash survived the retyping. Both files
+    # come from the same string, so they cannot disagree.
+    out = pathlib.Path(out_dir)
+    dest = out / "a" / "index.html"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(html, encoding="utf-8")
-    print(f"hers       {len(EDITS)} edits, engagement removed  -> {dest}")
+    (out / "a.html").write_text(html, encoding="utf-8")
+    print(f"hers       {len(EDITS)} edits, engagement removed  -> {dest} and {out / 'a.html'}")
     return dest
 
 

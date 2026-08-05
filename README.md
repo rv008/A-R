@@ -39,6 +39,11 @@ There are two copies, and they are the same invitation:
 | **<https://ronaldandamala.com>** | Ronald's | the full invitation |
 | **<https://ronaldandamala.com/a/>** | Amala's | her name first, no engagement |
 
+Hers is published twice, as `/a/index.html` and `/a.html`, so `/a`, `/a/` and
+`/a.html` all land on it. Static hosts resolve those by different rules and the
+link is going out to people retyping it off a card; which form they land on
+should not matter. Both files are written from the same string.
+
 Both are live on GitHub Pages behind a domain registered through Cloudflare.
 `rv008.github.io/A-R/` still redirects there, so links shared before the move
 keep working.
