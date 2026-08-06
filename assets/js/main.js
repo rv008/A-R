@@ -115,7 +115,7 @@
       hours: 4,
       summary: `Wedding of ${pair}`,
       where: "St. Casimir's Church, Kadavoor, Kollam",
-      note: "Ceremony at St. Casimir's Church, Kadavoor, at 11:30 am. Reception to follow at Bishop Jerome Convention Hall, Kollam.",
+      note: "Ceremony at St. Casimir's Church, Kadavoor, at 11:30 am. Reception to follow at Bishop Jerome Convention Hall, Kadavoor.",
     }),
     'END:VCALENDAR',
   ].map(fold).join('\r\n');

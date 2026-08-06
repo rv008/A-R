@@ -182,7 +182,7 @@ as scannable.
 | ---------- | ------------------------------ | ------------------- |
 | Engagement | Millennium Hall, Tangasseri    | `?q=` name search   |
 | Ceremony   | St. Casimir's Church, Kadavoor | shared pin          |
-| Reception  | Bishop Jerome Convention Hall  | shared pin          |
+| Reception  | Bishop Jerome Convention Hall, Kadavoor | shared pin |
 
 The church and reception are shared Google Maps pins, which land on the building
 rather than on a search for its name, and are short enough to bring both symbols
